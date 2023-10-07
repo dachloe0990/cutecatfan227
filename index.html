@@ -1,44 +1,75 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Real-Time Chat App</title>
-</head>
-<body>
-    <h1>nigger babble</h1>
+const express = require('express');
+const http = require('http');
+const socketIo = require('socket.io');
 
-    <label for="username">Username:</label>
-    <input type="text" id="username">
-    <br>
+const app = express();
+const server = http.createServer(app);
+const io = socketIo(server);
 
-    <div id="chat"></div>
+const connectedUsers = new Map();
 
-    <input type="text" id="message" placeholder="Type your message ">
-    <button onclick="sendMessage()">Send</button>
+io.on('connection', (socket) => {
+    console.log('A user connected');
 
-    <script src="/socket.io/socket.io.js"></script>
-    <script>
-        const usernameInput = document.getElementById("username");
-        const messageInput = document.getElementById("message");
-        const chatContainer = document.getElementById("chat");
-        const socket = io();
+    // Handle new user registration
+    socket.on('registerUser', (username) => {
+        connectedUsers.set(socket.id, username);
+        io.emit('userList', Array.from(connectedUsers.values()));
+    });
 
-        function sendMessage() {
-            const username = usernameInput.value;
-            const message = messageInput.value;
-            const timestamp = new Date().toLocaleTimeString();
-            const chatMessage = `<strong>${username}:</strong> ${message} <span style="font-size: 10px">${timestamp}</span><br>`;
-            
-            chatContainer.innerHTML += chatMessage;
-            messageInput.value = "";
+    // Handle messages
+    socket.on('message', (message) => {
+        const username = connectedUsers.get(socket.id);
+        const timestamp = new Date().toLocaleTimeString();
+        const chatMessage = `<strong>${username}:</strong> ${message} <span style="font-size: 10px">${timestamp}</span>`;
+        
+        io.emit('message', chatMessage);
+    });
 
-            // Send the message to the server
-            socket.emit('message', chatMessage);
-        }
+    socket.on('disconnect', () => {
+        const username = connectedUsers.get(socket.id);
+        connectedUsers.delete(socket.id);
+        io.emit('userList', Array.from(connectedUsers.values()));
+        console.log(`User ${username} disconnected`);
+    });
+});
 
-        // Receive messages from the server
-        socket.on('message', (data) => {
-            chatContainer.innerHTML += data;
-        });
-    </script>
-</body>
-</html>
+server.listen(3000, () => {
+    console.log('Server is running on port 3000');
+});
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    const usernameInput = document.getElementById("username");
+    const messageInput = document.getElementById("message");
+    const chatContainer = document.getElementById("chat");
+    const userList = document.getElementById("user-list");
+    const socket = io();
+
+    // Register the user with the server
+    socket.emit('registerUser', usernameInput.value);
+
+    function sendMessage() {
+        const message = messageInput.value;
+        const timestamp = new Date().toLocaleTimeString();
+        const chatMessage = `<strong>${usernameInput.value}:</strong> ${message} <span style="font-size: 10px">${timestamp}</span>`;
+        
+        chatContainer.innerHTML += chatMessage;
+        messageInput.value = "";
+
+        // Send the message to the server
+        socket.emit('message', message);
+    }
+
+    // Receive messages from the server
+    socket.on('message', (data) => {
+        chatContainer.innerHTML += `<p>${data}</p>`;
+    });
+
+    // Update user list
+    socket.on('userList', (users) => {
+        userList.innerHTML = `<strong>Users Online:</strong><br>${users.join('<br>')}`;
+    });
+</script>
+
+<!-- Display the user list -->
+<div id="user-list"></div>
