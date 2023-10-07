@@ -1,60 +1,44 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>cutecatfan227 bin</title>
-    <style>
-        body {
-            background-color: black;
-            color: white;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            overflow: hidden;
-        }
-
-        h1 {
-            font-size: 36px;
-        }
-
-        /* Bin Text Styles */
-        .bin-text {
-            font-size: 24px;
-            cursor: pointer;
-        }
-
-        /* Hidden Content Styles */
-        .hidden-content {
-            display: none;
-            text-align: center;
-        }
-
-        /* Show the hidden content when the Bin text is clicked */
-        .show-content:focus + .hidden-content {
-            display: block;
-        }
-    </style>
+    <title>Real-Time Chat App</title>
 </head>
 <body>
-    <h1>cutecatfan227</h1>
+    <h1>nigger babble</h1>
 
-    <a href="#bin-content" class="show-content">
-        <span class="bin-text">Bin</span>
-    </a>
+    <label for="username">Username:</label>
+    <input type="text" id="username">
+    <br>
 
-    <!-- Hidden Content -->
-    <div class="hidden-content" id="bin-content">
-        <h2>Bin:Deadly/Maid Accusing me of shit after i call him out on being maid lmfao u fucking dumbass nigga go slit ur wrists pussy</h2>
-    </div>
+    <div id="chat"></div>
 
-    <!-- Auto-play Audio Player with Loop -->
-    <audio controls autoplay loop>
-        <source src="https://drive.google.com/file/d/1-5FEWnJAPTX5V6QifZbJGGFqNjAz3s_n/view?usp=drivesdk" type="audio/mpeg">
-        Your browser does not support the audio element.
-    </audio>
+    <input type="text" id="message" placeholder="Type your message ">
+    <button onclick="sendMessage()">Send</button>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const usernameInput = document.getElementById("username");
+        const messageInput = document.getElementById("message");
+        const chatContainer = document.getElementById("chat");
+        const socket = io();
+
+        function sendMessage() {
+            const username = usernameInput.value;
+            const message = messageInput.value;
+            const timestamp = new Date().toLocaleTimeString();
+            const chatMessage = `<strong>${username}:</strong> ${message} <span style="font-size: 10px">${timestamp}</span><br>`;
+            
+            chatContainer.innerHTML += chatMessage;
+            messageInput.value = "";
+
+            // Send the message to the server
+            socket.emit('message', chatMessage);
+        }
+
+        // Receive messages from the server
+        socket.on('message', (data) => {
+            chatContainer.innerHTML += data;
+        });
+    </script>
 </body>
 </html>
